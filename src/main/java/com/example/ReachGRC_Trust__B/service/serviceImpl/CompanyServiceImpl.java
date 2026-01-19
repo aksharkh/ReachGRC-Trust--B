@@ -10,13 +10,19 @@ import com.example.ReachGRC_Trust__B.entity.Domain;
 import com.example.ReachGRC_Trust__B.exceptions.DuplicateResourceException;
 import com.example.ReachGRC_Trust__B.repository.CompanyRepository;
 import com.example.ReachGRC_Trust__B.service.service.CompanyService;
+import com.example.ReachGRC_Trust__B.utils.ExcelHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -27,6 +33,7 @@ public class CompanyServiceImpl implements CompanyService {
 
     private final CompanyRepository companyRepository;
     private final ModelMapper modelMapper;
+    private final ExcelHelper excelHelper;
 
 
     @Override
@@ -95,6 +102,108 @@ public class CompanyServiceImpl implements CompanyService {
         log.info("Company soft activated successfully with ID: {}", id);
 
     }
+
+
+    @Override
+    @Transactional
+    public List<CompanyDto> importFromExcel(MultipartFile file) throws IOException {
+        log.info("Importing companies from Excel file: {}", file.getOriginalFilename());
+
+        List<CompanyDto> companies = excelHelper.parseExcelFile(file);
+
+        List<CompanyDto> savedCompanies = companies.stream()
+                .map(companyDto ->{
+                    try {
+                        if( companyRepository.existsByCompanyName(companyDto.getCompanyName())){
+                            log.warn("Company already exists, skipping: {}", companyDto.getCompanyName());
+                            return null;
+                        }
+                        return createCompany(companyDto);
+
+                    } catch (Exception e) {
+                        log.error("Error importing company: {}", companyDto.getCompanyName());
+                        return null;
+                    }
+                        })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        log.info("Successfully imported {} companies", savedCompanies.size());
+        return savedCompanies;
+    }
+
+
+    @Override
+    @Transactional
+    public CompanyDto updateCompany(Long id, CompanyDto companyDto) {
+        log.info("Updating company with ID: {}", id);
+
+        Company existingCompany = companyRepository.findById(id).orElseThrow(() -> new RuntimeException("Company not found with ID:" +id));
+
+        if(!existingCompany.getCompanyName().equals(companyDto.getCompanyName()) ) {
+            throw new DuplicateResourceException("Company with name "+ companyDto.getCompanyName()+ "does not exists");
+        }
+
+        existingCompany.setCompanyName(companyDto.getCompanyName());
+        existingCompany.setStatement(companyDto.getStatement());
+
+        if(companyDto.getIsActive() != null){
+            existingCompany.setIsActive(companyDto.getIsActive());
+        }
+
+        existingCompany.getDomains().clear();
+
+        if(companyDto.getDomains() != null) {
+            for(DomainDto domainDto : companyDto.getDomains()) {
+                Domain domain = mapDomainToEntity(domainDto);
+                existingCompany.addDomain(domain);
+            }
+        }
+
+        Company updatedCompany = companyRepository.save(existingCompany);
+        log.info("Company updated successfully with ID: {}", updatedCompany.getId());
+
+        return mapToDto(updatedCompany);
+    }
+
+    @Override
+    @Transactional
+    public List<CompanyDto> syncFromExcel(MultipartFile file) throws IOException{
+        log.info("Syncing companies from Excel file (upsert mode) : {}", file.getOriginalFilename());
+
+        List<CompanyDto> companies = excelHelper.parseExcelFile(file);
+
+        List<CompanyDto> processedCompanies = new ArrayList<>();
+        int created = 0;
+        int updated = 0;
+
+
+        for (CompanyDto companyDto : companies){
+            try {
+                Optional<Company> existingCompany = companyRepository.findByCompanyName(companyDto.getCompanyName());
+
+                if(existingCompany.isPresent()) {
+                    CompanyDto updatedCompany = updateCompany(existingCompany.get().getId(), companyDto);
+                    processedCompanies.add(updatedCompany);
+                    updated++;
+                    log.info("Updated company: {}", companyDto.getCompanyName());
+
+                } else {
+                    CompanyDto createdCompany = createCompany(companyDto);
+                    processedCompanies.add(createdCompany);
+                    created++;
+                    log.info("Created company: {}", companyDto.getCompanyName());
+                }
+            } catch (Exception e) {
+                log.error("Error syncing company: {}", companyDto.getCompanyName(), e);
+            }
+        }
+
+        log.info("Sync Completed - Created: {}, updated: {}, Total: {}", created, updated, processedCompanies.size());
+        return processedCompanies;
+    }
+
+
 
 
 

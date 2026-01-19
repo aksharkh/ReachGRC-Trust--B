@@ -6,10 +6,13 @@ import com.example.ReachGRC_Trust__B.dtos.requestDtos.CompanyRequestDto;
 import com.example.ReachGRC_Trust__B.service.service.CompanyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Parameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -56,6 +59,23 @@ public class CompanyController {
         log.info("REST request to activate company with ID: {}", id);
         companyService.activateCompany(id);
         return ResponseEntity.ok("Company activated successfully");
+    }
+
+
+    @PostMapping("/import")
+    public ResponseEntity<List<CompanyDto>> importCompanies(@RequestParam("file") MultipartFile file) throws IOException {
+        log.info("REST request to import companies from Excel file: {}", file.getOriginalFilename());
+
+        List<CompanyDto> importedCompanies = companyService.importFromExcel(file);
+        return ResponseEntity.ok(importedCompanies);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CompanyDto> updateCompany(@PathVariable Long id, @RequestBody CompanyDto companyDto){
+        log.info("REST request to update company with ID: {}", id);
+
+        CompanyDto updatedCompany = companyService.updateCompany(id, companyDto);
+        return ResponseEntity.ok(updatedCompany);
     }
 
 
