@@ -2,12 +2,16 @@ package com.example.ReachGRC_Trust__B.controller;
 
 
 import com.example.ReachGRC_Trust__B.dtos.CompanyDto;
-import com.example.ReachGRC_Trust__B.dtos.requestDtos.CompanyRequestDto;
+
+import com.example.ReachGRC_Trust__B.dtos.resourceDtos.ResourceDto;
+
 import com.example.ReachGRC_Trust__B.service.service.CompanyService;
+import com.example.ReachGRC_Trust__B.service.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.Parameter;
+
 import org.springframework.http.HttpStatus;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +26,8 @@ import java.util.List;
 public class CompanyController {
 
     private final CompanyService companyService;
+    private final ResourceService resourceService;
+
 
     @GetMapping("/{companyId}")
     public ResponseEntity<CompanyDto> getCompanyById(@PathVariable Long companyId){
@@ -78,5 +84,48 @@ public class CompanyController {
         return ResponseEntity.ok(updatedCompany);
     }
 
+
+    // TODO: RESOURCES
+
+    @GetMapping("{companyName}/all")
+    public ResponseEntity<?> listAllImages(@PathVariable String companyName) {
+        log.info("REST: request listing all resources for company Name: {}", companyName);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+//                .contentType(MediaType.valueOf("image/png"))
+                .body(resourceService.listResources(companyName));
+    }
+
+    @PostMapping("/{companyName}/resource/")
+    public ResponseEntity<ResourceDto> uploadImage(@PathVariable String companyName, @RequestParam("file") MultipartFile file) throws IOException {
+        log.info("REST: request to upload file for company with Name: {}", companyName);
+
+        return ResponseEntity.ok(resourceService.saveResource(companyName, file.getOriginalFilename(), file));
+
+    }
+
+    @PutMapping("/{companyName}/resource/{fileId}")
+    public ResponseEntity<ResourceDto> updateImage(@PathVariable String companyName, @PathVariable Long fileId, @RequestParam("file") MultipartFile file) throws IOException {
+        log.info("REST: request for update file ID: {} for company Name: {}", fileId, companyName);
+
+        return ResponseEntity.ok(resourceService.updateResource(companyName, fileId, file));
+    }
+
+    @DeleteMapping("/{companyName}/resource/{fileId}")
+    public ResponseEntity<Void> deleteImageName(@PathVariable String companyName, @PathVariable Long fileId) {
+        log.info("REST: request for deleting File with ID: {}", fileId);
+
+        resourceService.removeResource(companyName, fileId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{companyName}/all")
+    public ResponseEntity<Void> deleteAllImages(@PathVariable String companyName) {
+        log.info("REST: request for deleting all file for comapny Name: {}", companyName);
+
+        resourceService.removeAllResources(companyName);
+        return ResponseEntity.noContent().build();
+    }
 
 }
