@@ -84,48 +84,4 @@ public class CompanyController {
         return ResponseEntity.ok(updatedCompany);
     }
 
-
-    // TODO: RESOURCES
-
-    @GetMapping("{companyName}/all")
-    public ResponseEntity<?> listAllImages(@PathVariable String companyName) {
-        log.info("REST: request listing all resources for company Name: {}", companyName);
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
-//                .contentType(MediaType.valueOf("image/png"))
-                .body(resourceService.listResources(companyName));
-    }
-
-    @PostMapping("/{companyName}/resource/")
-    public ResponseEntity<ResourceDto> uploadImage(@PathVariable String companyName, @RequestParam("file") MultipartFile file) throws IOException {
-        log.info("REST: request to upload file for company with Name: {}", companyName);
-
-        return ResponseEntity.ok(resourceService.saveResource(companyName, file.getOriginalFilename(), file));
-
-    }
-
-    @PutMapping("/{companyName}/resource/{fileId}")
-    public ResponseEntity<ResourceDto> updateImage(@PathVariable String companyName, @PathVariable Long fileId, @RequestParam("file") MultipartFile file) throws IOException {
-        log.info("REST: request for update file ID: {} for company Name: {}", fileId, companyName);
-
-        return ResponseEntity.ok(resourceService.updateResource(companyName, fileId, file));
-    }
-
-    @DeleteMapping("/{companyName}/resource/{fileId}")
-    public ResponseEntity<Void> deleteImageName(@PathVariable String companyName, @PathVariable Long fileId) {
-        log.info("REST: request for deleting File with ID: {}", fileId);
-
-        resourceService.removeResource(companyName, fileId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping("/{companyName}/all")
-    public ResponseEntity<Void> deleteAllImages(@PathVariable String companyName) {
-        log.info("REST: request for deleting all file for comapny Name: {}", companyName);
-
-        resourceService.removeAllResources(companyName);
-        return ResponseEntity.noContent().build();
-    }
-
 }
