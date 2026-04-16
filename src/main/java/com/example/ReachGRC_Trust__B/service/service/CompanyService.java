@@ -19,4 +19,6 @@ public interface CompanyService {
 
     List<CompanyDto> importFromExcel(MultipartFile file) throws IOException;
     List<CompanyDto> syncFromExcel(MultipartFile file) throws IOException;
+
+    List<CompanyDto> syncCompanies(List<CompanyDto> companies);
 }
