@@ -50,7 +50,7 @@ INSERT INTO controls (
 ) VALUES
 (
     'Access Control',
-    'ACTIVE',
+    'PENDING',
     1,
     'Ensure role-based access',
     NOW(),
@@ -58,7 +58,7 @@ INSERT INTO controls (
 ),
 (
     'Encryption',
-    'INACTIVE',
+    'OK',
     1,
     'Data encryption at rest',
     NOW(),
@@ -66,7 +66,7 @@ INSERT INTO controls (
 ),
 (
     'Audit Logging',
-    'ACTIVE',
+    'NOT_OK',
     2,
     'Track all system activities',
     NOW(),

@@ -2,12 +2,16 @@ package com.example.ReachGRC_Trust__B.controller;
 
 
 import com.example.ReachGRC_Trust__B.dtos.CompanyDto;
-import com.example.ReachGRC_Trust__B.dtos.requestDtos.CompanyRequestDto;
+
+import com.example.ReachGRC_Trust__B.dtos.resourceDtos.ResourceDto;
+
 import com.example.ReachGRC_Trust__B.service.service.CompanyService;
+import com.example.ReachGRC_Trust__B.service.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.Parameter;
+
 import org.springframework.http.HttpStatus;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +26,8 @@ import java.util.List;
 public class CompanyController {
 
     private final CompanyService companyService;
+    private final ResourceService resourceService;
+
 
     @GetMapping("/{companyId}")
     public ResponseEntity<CompanyDto> getCompanyById(@PathVariable Long companyId){
@@ -77,6 +83,5 @@ public class CompanyController {
         CompanyDto updatedCompany = companyService.updateCompany(id, companyDto);
         return ResponseEntity.ok(updatedCompany);
     }
-
 
 }

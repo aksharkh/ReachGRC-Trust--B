@@ -45,6 +45,8 @@ public class Company {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
+    @OneToMany(mappedBy = "company")
+    private List<Resource> resources;
 
     //helper
     public void addDomain(Domain domain){
