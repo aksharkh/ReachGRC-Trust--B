@@ -34,3 +34,4 @@ build/
 
 ### credentials ###
 credentials.json
+.DS_Store
