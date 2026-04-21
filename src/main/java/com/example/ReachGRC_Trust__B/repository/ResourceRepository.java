@@ -12,7 +12,7 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
     Resource findByFileId(Long fileId);
     Boolean existsByFileId(Long fileId);
     Boolean existsByFileName(String fileName);
-    List<Resource> findByCompanyCompanyName(String companyName);
+    List<Resource> findByCompanyId(Long companyId);
     void deleteByFileId(Long fileId);
-    void deleteByCompanyCompanyName(String companyName);
+    void deleteByCompanyId(Long companyId);
 }

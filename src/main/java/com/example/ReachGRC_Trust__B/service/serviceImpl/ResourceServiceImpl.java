@@ -11,7 +11,6 @@ import com.example.ReachGRC_Trust__B.repository.ResourceRepository;
 
 import com.example.ReachGRC_Trust__B.service.service.ResourceService;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,10 +34,10 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Transactional
     @Override
-    public ResourceDto saveResource(String companyName, String fileName, MultipartFile file) throws IOException {
+    public ResourceDto saveResource(Long companyId, String fileName, MultipartFile file) throws IOException {
 
-        log.info("Fetching Company With Name: {}", companyName);
-        Company company = companyRepository.findByCompanyName(companyName).orElseThrow(() ->
+        log.info("Fetching Company With Name: {}", companyId);
+        Company company = companyRepository.findById(companyId).orElseThrow(() ->
              new RuntimeException("Company Not Found With Name...!")
         );
 
@@ -47,19 +46,17 @@ public class ResourceServiceImpl implements ResourceService {
             throw new RuntimeException("File Already Exists");
         }
 
-
         byte[] fileData = file.getBytes();
 
-        Resource resourceNew = new Resource();
-        resourceNew.setFileName(fileName);
-        resourceNew.setFileData(fileData);
-        resourceNew.setCreatedAt(LocalDateTime.now());
-        resourceNew.setCompany(company);
-        resourceNew.setCompany(company);
+        Resource savedResource = resourceRepository.save(
+                Resource.builder()
+                    .fileName(fileName)
+                    .fileData(fileData)
+                    .company(company)
+                .build()
+        );
 
-        Resource savedResource = resourceRepository.save(resourceNew);
-
-        if(savedResource==null) {
+        if(savedResource ==null) {
             throw new RuntimeException("Couldn't Save the file");
         }
 
@@ -70,11 +67,11 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Transactional
     @Override
-    public ResourceDto updateResource(String companyName, Long fileId, MultipartFile file) throws IOException {
+    public ResourceDto updateResource(Long companyId, Long fileId, MultipartFile file) throws IOException {
 
-        log.info("Fetching Company With Name: {}", companyName);
-        Company company = companyRepository.findByCompanyName(companyName).orElseThrow(() ->
-                new RuntimeException("Company Not Found With Name...!")
+        log.info("Fetching Company With Id: {}", companyId);
+        Company company = companyRepository.findById(companyId).orElseThrow(() ->
+                new RuntimeException("Company Not Found with Id: " + companyId)
         );
 
         log.info("Fetching File with ID: {}", fileId);
@@ -97,19 +94,20 @@ public class ResourceServiceImpl implements ResourceService {
         Resource updatedResource = resourceRepository.save(resource);
 
         if(updatedResource == null) {
-            throw new RuntimeException("Couldn't Update File with Name: " +updatedResource.getFileName());
+            throw new RuntimeException("Couldn't Update File with Name: " + updatedResource.getFileName());
         }
         return mapToDto(updatedResource);
     }
 
+    @Transactional
     @Override
-    public ResourceResponse listResources(String companyName) {
+    public ResourceResponse listResources(Long companyId) {
 
-        log.info("Fetching Company With Name: {}", companyName);
-        Company company = companyRepository.findByCompanyName(companyName).orElseThrow(()-> new RuntimeException("Company Not Found"));
+        log.info("Fetching Company With Id: {}", companyId);
+        Company company = companyRepository.findById(companyId).orElseThrow(()-> new RuntimeException("Company Not Found"));
 
-        log.info("Fetching all the Files in Company: {}", companyName);
-        List<ResourceDto> resources = mapToDtoList(resourceRepository.findByCompanyCompanyName(companyName));
+        log.info("Fetching all the Files in Company: {}", companyId);
+        List<ResourceDto> resources = mapToDtoList(resourceRepository.findByCompanyId(companyId));
 
         return new ResourceResponse(company.getId(), company.getCompanyName(), resources);
     }
@@ -117,10 +115,10 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Transactional
     @Override
-    public void removeResource(String companyName, Long fileId) {
+    public void removeResource(Long companyId, Long fileId) {
 
-        log.info("Fetching Company: {}", companyName);
-        if(!companyRepository.existsByCompanyName(companyName)) {
+        log.info("Fetching Company with Id: {}", companyId);
+        if(!companyRepository.existsById(companyId)) {
             throw new RuntimeException("Company Not Found");
         }
 
@@ -135,17 +133,17 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Transactional
     @Override
-    public void removeAllResources(String companyName) {
+    public void removeAllResources(Long companyId) {
 
-        log.info("Fetching Company: {}", companyName);
-        if(!companyRepository.existsByCompanyName(companyName)) {
+        log.info("Fetching Company Id: {}", companyId);
+        if(!companyRepository.existsById(companyId)) {
             throw new RuntimeException("Company NOt Found");
         }
 
-        log.info("Deleting all the resources from Company {}", companyName);
+        log.warn("Deleting all the resources from Company with Id: {}", companyId);
 
-        resourceRepository.deleteByCompanyCompanyName(companyName);
-        log.info("Deleted All the Files from Company: {}", companyName);
+        resourceRepository.deleteByCompanyId(companyId);
+//        log.warn("Deleted All the Files from Company with Id: {}", companyId;
     }
 
 

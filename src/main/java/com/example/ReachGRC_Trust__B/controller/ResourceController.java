@@ -21,44 +21,44 @@ public class ResourceController {
 
     // TODO: RESOURCES
 
-    @GetMapping("{companyName}/resources/all")
-    public ResponseEntity<?> listAllImages(@PathVariable String companyName) {
-        log.info("REST: request listing all resources for company Name: {}", companyName);
+    @GetMapping("{companyId}/resources/all")
+    public ResponseEntity<?> listAllImages(@PathVariable Long companyId) {
+        log.info("REST: request listing all resources for company Id: {}", companyId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
 //                .contentType(MediaType.valueOf("image/png"))
-                .body(resourceService.listResources(companyName));
+                .body(resourceService.listResources(companyId));
     }
 
-    @PostMapping("/{companyName}/resource/")
-    public ResponseEntity<ResourceDto> uploadImage(@PathVariable String companyName, @RequestParam("file") MultipartFile file) throws IOException {
-        log.info("REST: request to upload file for company with Name: {}", companyName);
+    @PostMapping("/{companyId}/resource/new")
+    public ResponseEntity<ResourceDto> uploadImage(@PathVariable Long companyId, @RequestParam("file") MultipartFile file) throws IOException {
+        log.info("REST: request to upload file for company with Name: {}", companyId);
 
-        return ResponseEntity.ok(resourceService.saveResource(companyName, file.getOriginalFilename(), file));
+        return ResponseEntity.ok(resourceService.saveResource(companyId, file.getOriginalFilename(), file));
 
     }
 
-    @PutMapping("/{companyName}/resource/{fileId}")
-    public ResponseEntity<ResourceDto> updateImage(@PathVariable String companyName, @PathVariable Long fileId, @RequestParam("file") MultipartFile file) throws IOException {
-        log.info("REST: request for update file ID: {} for company Name: {}", fileId, companyName);
+    @PutMapping("/{companyId}/resource/{fileId}")
+    public ResponseEntity<ResourceDto> updateImage(@PathVariable Long companyId, @PathVariable Long fileId, @RequestParam("file") MultipartFile file) throws IOException {
+        log.info("REST: request for update file ID: {} for company Name: {}", fileId, companyId);
 
-        return ResponseEntity.ok(resourceService.updateResource(companyName, fileId, file));
+        return ResponseEntity.ok(resourceService.updateResource(companyId, fileId, file));
     }
 
-    @DeleteMapping("/{companyName}/resource/{fileId}")
-    public ResponseEntity<Void> deleteImageName(@PathVariable String companyName, @PathVariable Long fileId) {
+    @DeleteMapping("/{companyId}/resource/{fileId}")
+    public ResponseEntity<Void> deleteImageName(@PathVariable Long companyId, @PathVariable Long fileId) {
         log.info("REST: request for deleting File with ID: {}", fileId);
 
-        resourceService.removeResource(companyName, fileId);
+        resourceService.removeResource(companyId, fileId);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{companyName}/all")
-    public ResponseEntity<Void> deleteAllImages(@PathVariable String companyName) {
-        log.info("REST: request for deleting all file for comapny Name: {}", companyName);
+    @DeleteMapping("/{companyId}/resources/all")
+    public ResponseEntity<Void> deleteAllImages(@PathVariable Long companyId) {
+        log.info("REST: request for deleting all file for comapny Name: {}", companyId);
 
-        resourceService.removeAllResources(companyName);
+        resourceService.removeAllResources(companyId);
         return ResponseEntity.noContent().build();
     }
 

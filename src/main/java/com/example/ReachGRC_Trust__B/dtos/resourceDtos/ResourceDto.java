@@ -17,7 +17,7 @@ public class ResourceDto {
 
     private byte[] fileData;
 
-    private LocalDateTime createAt;
+    private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
 //

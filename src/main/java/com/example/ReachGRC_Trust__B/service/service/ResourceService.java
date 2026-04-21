@@ -7,11 +7,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 public interface ResourceService {
-    ResourceDto saveResource(String companyName, String fileName, MultipartFile file) throws IOException;
-    ResourceDto updateResource(String companyName, Long fileId, MultipartFile file) throws IOException;
+    ResourceDto saveResource(Long companyId, String fileName, MultipartFile file) throws IOException;
+    ResourceDto updateResource(Long companyId, Long fileId, MultipartFile file) throws IOException;
 
-    ResourceResponse listResources(String companyName);
+    ResourceResponse listResources(Long companyId);
 
-    void removeResource(String companyName, Long fileId);
-    void removeAllResources(String companyName);
+    void removeResource(Long companyId, Long fileId);
+    void removeAllResources(Long companyId);
 }
