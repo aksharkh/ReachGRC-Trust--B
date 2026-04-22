@@ -35,3 +35,6 @@ build/
 ### credentials ###
 credentials.json
 .DS_Store
+
+##resources##
+src/main/resources/
