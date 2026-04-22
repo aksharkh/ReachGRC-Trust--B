@@ -3,8 +3,6 @@ package com.example.ReachGRC_Trust__B.controller;
 
 import com.example.ReachGRC_Trust__B.dtos.CompanyDto;
 
-import com.example.ReachGRC_Trust__B.dtos.resourceDtos.ResourceDto;
-
 import com.example.ReachGRC_Trust__B.service.service.CompanyService;
 import com.example.ReachGRC_Trust__B.service.service.ResourceService;
 import lombok.RequiredArgsConstructor;
