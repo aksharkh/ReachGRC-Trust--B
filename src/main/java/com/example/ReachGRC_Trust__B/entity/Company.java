@@ -45,8 +45,11 @@ public class Company {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
-    @OneToMany(mappedBy = "company")
-    private List<Resource> resources;
+    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Logo> logos = new ArrayList<>();
+
+    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Pdf> pdfs = new ArrayList<>();
 
     //helper
     public void addDomain(Domain domain){
