@@ -14,7 +14,7 @@ public class SheetSyncScheduler {
     private final SheetSyncService sheetSyncService;
 
     // Run every 5 minutes (300000 ms)
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 3600000)
     public void scheduleSheetSync() {
         log.info("Executing scheduled sheet sync...");
         try {
