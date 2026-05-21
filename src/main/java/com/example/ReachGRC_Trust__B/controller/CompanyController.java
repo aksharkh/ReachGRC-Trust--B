@@ -4,7 +4,7 @@ package com.example.ReachGRC_Trust__B.controller;
 import com.example.ReachGRC_Trust__B.dtos.CompanyDto;
 
 import com.example.ReachGRC_Trust__B.service.service.CompanyService;
-import com.example.ReachGRC_Trust__B.service.service.ResourceService;
+// import com.example.ReachGRC_Trust__B.service.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,13 +18,13 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/trust")
+@RequestMapping("/api/trust/admin")
 @RequiredArgsConstructor
 @Slf4j
 public class CompanyController {
 
     private final CompanyService companyService;
-    private final ResourceService resourceService;
+//    private final ResourceService resourceService;
 
 
     @GetMapping("/{companyId}")
@@ -46,6 +46,7 @@ public class CompanyController {
     public ResponseEntity<List<CompanyDto>> getAllActiveCompanies(){
         return  ResponseEntity.ok(companyService.getAllActiveCompanies());
     }
+
     @GetMapping("/allCompanies")
     public ResponseEntity<List<CompanyDto>> getAllCompanies(){
         return ResponseEntity.ok(companyService.getAllCompanies());
@@ -64,7 +65,6 @@ public class CompanyController {
         companyService.activateCompany(id);
         return ResponseEntity.ok("Company activated successfully");
     }
-
 
     @PostMapping("/import")
     public ResponseEntity<List<CompanyDto>> importCompanies(@RequestParam("file") MultipartFile file) throws IOException {
