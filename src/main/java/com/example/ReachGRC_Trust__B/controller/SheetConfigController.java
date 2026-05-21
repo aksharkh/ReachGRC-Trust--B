@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/sheet-config")
+@RequestMapping("/api/trust/admin/sheet-config")
 @RequiredArgsConstructor
 @Slf4j
 public class SheetConfigController {
