@@ -51,6 +51,9 @@ public class Company {
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Pdf> pdfs = new ArrayList<>();
 
+    @OneToOne(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private CompanyApiKey apiKey;
+
     //helper
     public void addDomain(Domain domain){
         domains.add(domain);
