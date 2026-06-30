@@ -1,9 +1,9 @@
 package com.example.ReachGRC_Trust__B.dtos.requestDtos;
 
-
 import com.example.ReachGRC_Trust__B.dtos.DomainDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -19,10 +19,18 @@ public class CompanyRequestDto {
     private String statements;
 
     @Valid
-    @NotBlank(message = "Company must have at least one domain")
+    @NotEmpty(message = "Company must have at least one domain")
     private List<DomainDto> domains = new ArrayList<>();
 
     private Boolean isActive;
+
+    private String apiKey;
+    private String apiKeyStatus;
+    private LocalDateTime apiKeyIssuedAt;
+    private LocalDateTime apiKeyExpiresAt;
+    private String subscriptionPlan;
+    private String subscriptionStatus;
+    private LocalDateTime subscriptionExpiresAt;
 
     private LocalDateTime createdAt;
 

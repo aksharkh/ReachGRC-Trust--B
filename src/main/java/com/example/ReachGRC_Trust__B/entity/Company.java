@@ -45,6 +45,27 @@ public class Company {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
+    @Column(name = "api_key", unique = true)
+    private String apiKey;
+
+    @Column(name = "api_key_status")
+    private String apiKeyStatus;
+
+    @Column(name = "api_key_issued_at")
+    private LocalDateTime apiKeyIssuedAt;
+
+    @Column(name = "api_key_expires_at")
+    private LocalDateTime apiKeyExpiresAt;
+
+    @Column(name = "subscription_plan")
+    private String subscriptionPlan;
+
+    @Column(name = "subscription_status")
+    private String subscriptionStatus;
+
+    @Column(name = "subscription_expires_at")
+    private LocalDateTime subscriptionExpiresAt;
+
     @OneToMany(mappedBy = "company")
     private List<Resource> resources;
 

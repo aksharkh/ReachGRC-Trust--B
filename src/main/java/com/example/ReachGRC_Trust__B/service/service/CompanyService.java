@@ -21,4 +21,7 @@ public interface CompanyService {
     List<CompanyDto> syncFromExcel(MultipartFile file) throws IOException;
 
     List<CompanyDto> syncCompanies(List<CompanyDto> companies);
+
+    CompanyDto generateApiKey(Long companyId);
+    CompanyDto toggleApiKeyStatus(Long companyId);
 }

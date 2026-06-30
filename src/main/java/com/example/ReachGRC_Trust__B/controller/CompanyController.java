@@ -82,4 +82,16 @@ public class CompanyController {
         return ResponseEntity.ok(updatedCompany);
     }
 
+    @PostMapping("/{id}/api-key/generate")
+    public ResponseEntity<CompanyDto> generateApiKey(@PathVariable Long id) {
+        log.info("REST request to generate API key for company ID: {}", id);
+        return ResponseEntity.ok(companyService.generateApiKey(id));
+    }
+
+    @PatchMapping("/{id}/api-key/status")
+    public ResponseEntity<CompanyDto> toggleApiKeyStatus(@PathVariable Long id) {
+        log.info("REST request to toggle API key status for company ID: {}", id);
+        return ResponseEntity.ok(companyService.toggleApiKeyStatus(id));
+    }
+
 }

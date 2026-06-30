@@ -4,27 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
 @Data
-@AllArgsConstructor
 @Builder
+@AllArgsConstructor
 @NoArgsConstructor
-public class ResourceDto {
-
-    private Long fileId;
-
+public class PublicResourceResponseDto {
+    private Long id;
     private String fileName;
-
-    private byte[] fileData;
-
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
-//
-//    private Long companyId;
-//
-//    private String companyName;
-
+    private String fileType;
+    private Long fileSize;
+    private LocalDateTime uploadedAt;
 }

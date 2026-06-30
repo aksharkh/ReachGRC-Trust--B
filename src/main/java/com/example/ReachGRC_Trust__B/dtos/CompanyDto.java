@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import jakarta.validation.constraints.NotEmpty;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,10 +27,18 @@ public class CompanyDto {
     private String statement;
 
     @Valid
-    @NotBlank(message = "Company must have at least one domain")
+    @NotEmpty(message = "Company must have at least one domain")
     private List<DomainDto> domains = new ArrayList<>();
 
     private Boolean isActive;
+
+    private String apiKey;
+    private String apiKeyStatus;
+    private LocalDateTime apiKeyIssuedAt;
+    private LocalDateTime apiKeyExpiresAt;
+    private String subscriptionPlan;
+    private String subscriptionStatus;
+    private LocalDateTime subscriptionExpiresAt;
 
     private LocalDateTime createdAt;
 

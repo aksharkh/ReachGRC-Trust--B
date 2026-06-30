@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -142,18 +143,10 @@ public class CompanyServiceImpl implements CompanyService {
                 .orElseThrow(() -> new RuntimeException("Company not found with ID:" + id));
 
         if (!existingCompany.getCompanyName().equals(companyDto.getCompanyName())) {
-            // This case might be tricky if we match by name in syncCompanies
-            // But if called directly via API, we might want to allow name change if ID matches
-            // However, existing logic threw exception if name mismatched, which seems to imply
-            // name is unique/immutable identity for this update context or it was a check?
-            // "Company with name ... does not exists" message suggests it was checking if the new name is valid?
-            // Actually, usually update shouldn't enforce name match with DTO if we are changing name.
-            // But let's stick to existing logic for now unless it breaks sync.
-            // In syncCompanies, we findByName, so name will always match.
-             // existing checks:
-             // if(!existingCompany.getCompanyName().equals(companyDto.getCompanyName()) ) {
-             //    throw new DuplicateResourceException("Company with name "+ companyDto.getCompanyName()+ "does not exists");
-             // }
+            if (companyRepository.existsByCompanyName(companyDto.getCompanyName())) {
+                throw new DuplicateResourceException("Company with name: " + companyDto.getCompanyName() + " already exists");
+            }
+            existingCompany.setCompanyName(companyDto.getCompanyName());
         }
 
         // Update basic fields
@@ -189,22 +182,31 @@ public class CompanyServiceImpl implements CompanyService {
         List<Domain> existingDomains = company.getDomains();
         
         // 1. Identify domains to remove (present in DB but not in DTO)
-        List<String> incomingNames = domainDtos.stream()
-                .map(DomainDto::getName)
+        List<Long> incomingIds = domainDtos.stream()
+                .map(DomainDto::getId)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         
-        existingDomains.removeIf(domain -> !incomingNames.contains(domain.getName()));
+        existingDomains.removeIf(domain -> domain.getId() != null && !incomingIds.contains(domain.getId()));
 
         // 2. Identify domains to add or update
         for (DomainDto domainDto : domainDtos) {
-            Optional<Domain> existingDomainOpt = existingDomains.stream()
-                    .filter(d -> d.getName().equals(domainDto.getName()))
-                    .findFirst();
+            Optional<Domain> existingDomainOpt = Optional.empty();
+            if (domainDto.getId() != null) {
+                existingDomainOpt = existingDomains.stream()
+                        .filter(d -> d.getId().equals(domainDto.getId()))
+                        .findFirst();
+            }
+            if (existingDomainOpt.isEmpty()) {
+                existingDomainOpt = existingDomains.stream()
+                        .filter(d -> d.getName().equals(domainDto.getName()))
+                        .findFirst();
+            }
 
             if (existingDomainOpt.isPresent()) {
                 // Update existing domain
                 Domain domain = existingDomainOpt.get();
-                // update other fields if Domain has them (currently only name, which matches)
+                domain.setName(domainDto.getName());
                 if (domainDto.getControls() != null) {
                     updateControls(domain, domainDto.getControls());
                 } else {
@@ -222,21 +224,31 @@ public class CompanyServiceImpl implements CompanyService {
         List<Control> existingControls = domain.getControls();
 
         // 1. Identify controls to remove
-        List<String> incomingNames = controlDtos.stream()
-                .map(ControlDto::getName)
+        List<Long> incomingIds = controlDtos.stream()
+                .map(ControlDto::getId)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        existingControls.removeIf(control -> !incomingNames.contains(control.getName()));
+        existingControls.removeIf(control -> control.getId() != null && !incomingIds.contains(control.getId()));
 
         // 2. Add or Update
         for (ControlDto controlDto : controlDtos) {
-            Optional<Control> existingControlOpt = existingControls.stream()
-                    .filter(c -> c.getName().equals(controlDto.getName()))
-                    .findFirst();
+            Optional<Control> existingControlOpt = Optional.empty();
+            if (controlDto.getId() != null) {
+                existingControlOpt = existingControls.stream()
+                        .filter(c -> c.getId().equals(controlDto.getId()))
+                        .findFirst();
+            }
+            if (existingControlOpt.isEmpty()) {
+                existingControlOpt = existingControls.stream()
+                        .filter(c -> c.getName().equals(controlDto.getName()))
+                        .findFirst();
+            }
 
             if (existingControlOpt.isPresent()) {
                 Control control = existingControlOpt.get();
                 // Update fields
+                control.setName(controlDto.getName());
                 control.setStatus(controlDto.getStatus());
                 control.setRemarks(controlDto.getRemarks());
             } else {
@@ -310,12 +322,40 @@ public class CompanyServiceImpl implements CompanyService {
         return processedCompanies;
     }
 
+    @Override
+    @Transactional
+    public CompanyDto generateApiKey(Long companyId) {
+        log.info("Generating API Key for company ID: {}", companyId);
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Company not found with ID: " + companyId));
+        
+        String newKey = "rgc_" + java.util.UUID.randomUUID().toString().replace("-", "");
+        company.setApiKey(newKey);
+        company.setApiKeyStatus("ACTIVE");
+        company.setApiKeyIssuedAt(LocalDateTime.now());
+        company.setApiKeyExpiresAt(LocalDateTime.now().plusYears(1));
+        
+        Company saved = companyRepository.save(company);
+        return mapToDto(saved);
+    }
 
-
-
-
-
-
+    @Override
+    @Transactional
+    public CompanyDto toggleApiKeyStatus(Long companyId) {
+        log.info("Toggling API Key status for company ID: {}", companyId);
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Company not found with ID: " + companyId));
+        
+        String currentStatus = company.getApiKeyStatus();
+        if ("ACTIVE".equalsIgnoreCase(currentStatus)) {
+            company.setApiKeyStatus("INACTIVE");
+        } else {
+            company.setApiKeyStatus("ACTIVE");
+        }
+        
+        Company saved = companyRepository.save(company);
+        return mapToDto(saved);
+    }
 
 //helpers
 

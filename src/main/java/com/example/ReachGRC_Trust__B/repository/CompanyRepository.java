@@ -17,6 +17,8 @@ public interface CompanyRepository extends JpaRepository<Company, Long> {
 
     boolean existsByCompanyName(String companyName);
 
+    Optional<Company> findByApiKey(String apiKey);
+
 
 //    @Query("SELECT DISTINCT c FROM Company c LEFT JOIN FETCH c.domains WHERE cisActive = true")
 //    List<Company> findAllActiveWithDomains();

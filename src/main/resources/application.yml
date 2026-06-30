@@ -4,9 +4,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:reachgrc}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ReachGRC-Trust--B}
     username: ${DB_USER:postgres}
-    password: ${DB_PASS:admin}
+    password: ${DB_PASS:root}
 
   jpa:
     hibernate:
