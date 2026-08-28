@@ -3,9 +3,7 @@ package com.example.ReachGRC_Trust__B.entity;
 
 import com.example.ReachGRC_Trust__B.enums.Status;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -14,7 +12,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "controls")
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"domain"})
+@EqualsAndHashCode(exclude = {"domain"})
 @AllArgsConstructor
 @NoArgsConstructor
 public class Control {

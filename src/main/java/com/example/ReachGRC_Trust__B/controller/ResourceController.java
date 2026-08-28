@@ -62,4 +62,38 @@ public class ResourceController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/{companyId}/resource/{fileId}/label")
+    public ResponseEntity<ResourceDto> updateResourceLabel(
+            @PathVariable Long companyId,
+            @PathVariable Long fileId,
+            @RequestParam("label") String label) {
+        log.info("REST: request to update label for file ID: {} to: {}", fileId, label);
+        return ResponseEntity.ok(resourceService.updateResourceLabel(companyId, fileId, label));
+    }
+
+    @PostMapping("/{companyId}/resource/{fileId}/verify-access")
+    public ResponseEntity<?> verifyAccess(
+            @PathVariable Long companyId,
+            @PathVariable Long fileId,
+            @RequestBody java.util.Map<String, String> payload) {
+        String name = payload.get("name");
+        String email = payload.get("email");
+        String company = payload.get("company");
+        log.info("REST: Access verification request for file ID: {} by user: {} ({}) in company ID: {}", fileId, name, email, companyId);
+        
+        if (name == null || name.trim().isEmpty() || email == null || !email.contains("@")) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Valid full name and work email are required."));
+        }
+        
+        return ResponseEntity.ok(java.util.Map.of(
+            "status", "AUTHORIZED",
+            "message", "Access granted for watermarked preview and download.",
+            "authorizedTo", name.trim(),
+            "email", email.trim(),
+            "company", company != null ? company.trim() : "",
+            "timestamp", java.time.LocalDateTime.now().toString(),
+            "token", java.util.UUID.randomUUID().toString()
+        ));
+    }
+
 }

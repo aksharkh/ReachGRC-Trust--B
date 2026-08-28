@@ -94,4 +94,36 @@ public class CompanyController {
         return ResponseEntity.ok(companyService.toggleApiKeyStatus(id));
     }
 
+    @GetMapping("/{companyId}/milestones")
+    public ResponseEntity<List<com.example.ReachGRC_Trust__B.dtos.MilestoneDto>> getMilestones(@PathVariable Long companyId) {
+        log.info("REST request to fetch milestones for company ID: {}", companyId);
+        return ResponseEntity.ok(companyService.getMilestonesByCompanyId(companyId));
+    }
+
+    @PostMapping("/{companyId}/milestones")
+    public ResponseEntity<com.example.ReachGRC_Trust__B.dtos.MilestoneDto> addMilestone(
+            @PathVariable Long companyId, 
+            @RequestBody com.example.ReachGRC_Trust__B.dtos.MilestoneDto milestoneDto) {
+        log.info("REST request to add milestone for company ID: {}", companyId);
+        return new ResponseEntity<>(companyService.addMilestone(companyId, milestoneDto), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{companyId}/milestones/{milestoneId}")
+    public ResponseEntity<com.example.ReachGRC_Trust__B.dtos.MilestoneDto> updateMilestone(
+            @PathVariable Long companyId, 
+            @PathVariable Long milestoneId, 
+            @RequestBody com.example.ReachGRC_Trust__B.dtos.MilestoneDto milestoneDto) {
+        log.info("REST request to update milestone ID: {} for company ID: {}", milestoneId, companyId);
+        return ResponseEntity.ok(companyService.updateMilestone(companyId, milestoneId, milestoneDto));
+    }
+
+    @DeleteMapping("/{companyId}/milestones/{milestoneId}")
+    public ResponseEntity<String> deleteMilestone(
+            @PathVariable Long companyId, 
+            @PathVariable Long milestoneId) {
+        log.info("REST request to delete milestone ID: {} for company ID: {}", milestoneId, companyId);
+        companyService.deleteMilestone(companyId, milestoneId);
+        return ResponseEntity.ok("Milestone deleted successfully");
+    }
+
 }

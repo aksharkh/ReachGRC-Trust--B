@@ -24,4 +24,9 @@ public interface CompanyService {
 
     CompanyDto generateApiKey(Long companyId);
     CompanyDto toggleApiKeyStatus(Long companyId);
+
+    List<com.example.ReachGRC_Trust__B.dtos.MilestoneDto> getMilestonesByCompanyId(Long companyId);
+    com.example.ReachGRC_Trust__B.dtos.MilestoneDto addMilestone(Long companyId, com.example.ReachGRC_Trust__B.dtos.MilestoneDto milestoneDto);
+    com.example.ReachGRC_Trust__B.dtos.MilestoneDto updateMilestone(Long companyId, Long milestoneId, com.example.ReachGRC_Trust__B.dtos.MilestoneDto milestoneDto);
+    void deleteMilestone(Long companyId, Long milestoneId);
 }

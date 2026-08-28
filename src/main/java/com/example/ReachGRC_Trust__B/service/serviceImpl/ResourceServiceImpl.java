@@ -143,7 +143,26 @@ public class ResourceServiceImpl implements ResourceService {
         log.warn("Deleting all the resources from Company with Id: {}", companyId);
 
         resourceRepository.deleteByCompanyId(companyId);
-//        log.warn("Deleted All the Files from Company with Id: {}", companyId;
+    }
+
+    @Transactional
+    @Override
+    public ResourceDto updateResourceLabel(Long companyId, Long fileId, String label) {
+        log.info("Fetching Company with Id: {}", companyId);
+        if(!companyRepository.existsById(companyId)) {
+            throw new RuntimeException("Company Not Found");
+        }
+
+        log.info("Fetching File with ID: {}", fileId);
+        Resource resource = resourceRepository.findByFileId(fileId);
+        if(resource == null) {
+            throw new RuntimeException("File Not Found");
+        }
+
+        resource.setLabel(label);
+        resource.setUpdatedAt(LocalDateTime.now());
+        Resource updatedResource = resourceRepository.save(resource);
+        return mapToDto(updatedResource);
     }
 
 

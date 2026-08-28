@@ -14,4 +14,5 @@ public interface ResourceService {
 
     void removeResource(Long companyId, Long fileId);
     void removeAllResources(Long companyId);
+    ResourceDto updateResourceLabel(Long companyId, Long fileId, String label);
 }

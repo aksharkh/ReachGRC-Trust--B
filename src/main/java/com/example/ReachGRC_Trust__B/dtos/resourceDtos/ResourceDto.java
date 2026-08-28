@@ -22,6 +22,8 @@ public class ResourceDto {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    private String label;
 //
 //    private Long companyId;
 //

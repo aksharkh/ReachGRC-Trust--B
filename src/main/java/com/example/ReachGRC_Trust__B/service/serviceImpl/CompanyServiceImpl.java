@@ -3,12 +3,15 @@ package com.example.ReachGRC_Trust__B.service.serviceImpl;
 import com.example.ReachGRC_Trust__B.dtos.CompanyDto;
 import com.example.ReachGRC_Trust__B.dtos.ControlDto;
 import com.example.ReachGRC_Trust__B.dtos.DomainDto;
+import com.example.ReachGRC_Trust__B.dtos.MilestoneDto;
 import com.example.ReachGRC_Trust__B.dtos.requestDtos.CompanyRequestDto;
 import com.example.ReachGRC_Trust__B.entity.Company;
 import com.example.ReachGRC_Trust__B.entity.Control;
 import com.example.ReachGRC_Trust__B.entity.Domain;
+import com.example.ReachGRC_Trust__B.entity.Milestone;
 import com.example.ReachGRC_Trust__B.exceptions.DuplicateResourceException;
 import com.example.ReachGRC_Trust__B.repository.CompanyRepository;
+import com.example.ReachGRC_Trust__B.repository.MilestoneRepository;
 import com.example.ReachGRC_Trust__B.service.service.CompanyService;
 import com.example.ReachGRC_Trust__B.utils.ExcelHelper;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +36,7 @@ import java.util.stream.Collectors;
 public class CompanyServiceImpl implements CompanyService {
 
     private final CompanyRepository companyRepository;
+    private final MilestoneRepository milestoneRepository;
     private final ModelMapper modelMapper;
     private final ExcelHelper excelHelper;
 
@@ -151,6 +155,9 @@ public class CompanyServiceImpl implements CompanyService {
 
         // Update basic fields
         existingCompany.setStatement(companyDto.getStatement());
+        existingCompany.setLatitude(companyDto.getLatitude());
+        existingCompany.setLongitude(companyDto.getLongitude());
+        existingCompany.setLocationName(companyDto.getLocationName());
 
         if (companyDto.getIsActive() != null) {
             existingCompany.setIsActive(companyDto.getIsActive());
@@ -170,6 +177,11 @@ public class CompanyServiceImpl implements CompanyService {
              // But usually null means "don't touch". Let's assume we want to sync what defines the company.
              // If the sheet has no domains, we probably want to remove them.
              existingCompany.getDomains().clear();
+        }
+
+        // Smart Update for Milestones
+        if (companyDto.getMilestones() != null && !companyDto.getMilestones().isEmpty()) {
+            updateCompanyMilestones(existingCompany, companyDto.getMilestones());
         }
 
         Company updatedCompany = companyRepository.save(existingCompany);
@@ -287,7 +299,13 @@ public class CompanyServiceImpl implements CompanyService {
                 Optional<Company> existingCompany = companyRepository.findByCompanyName(companyDto.getCompanyName());
 
                 if(existingCompany.isPresent()) {
-                    CompanyDto updatedCompany = updateCompany(existingCompany.get().getId(), companyDto);
+                    Company existing = existingCompany.get();
+                    // Preserve existing location details since sheet/excel sync does not manage them
+                    companyDto.setLatitude(existing.getLatitude());
+                    companyDto.setLongitude(existing.getLongitude());
+                    companyDto.setLocationName(existing.getLocationName());
+
+                    CompanyDto updatedCompany = updateCompany(existing.getId(), companyDto);
                     processedCompanies.add(updatedCompany);
                     updated++;
                     log.info("Updated company: {}", companyDto.getCompanyName());
@@ -357,10 +375,161 @@ public class CompanyServiceImpl implements CompanyService {
         return mapToDto(saved);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<MilestoneDto> getMilestonesByCompanyId(Long companyId) {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Company not found with ID: " + companyId));
+        if (company.getMilestones() == null || company.getMilestones().isEmpty()) {
+            return createDefaultMilestones(company).stream()
+                    .map(m -> modelMapper.map(m, MilestoneDto.class))
+                    .collect(Collectors.toList());
+        }
+        return company.getMilestones().stream()
+                .map(m -> modelMapper.map(m, MilestoneDto.class))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public MilestoneDto addMilestone(Long companyId, MilestoneDto milestoneDto) {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Company not found with ID: " + companyId));
+        int nextOrder = company.getMilestones() != null ? company.getMilestones().size() + 1 : 1;
+        Milestone milestone = Milestone.builder()
+                .title(milestoneDto.getTitle())
+                .date(milestoneDto.getDate())
+                .status(milestoneDto.getStatus() != null ? milestoneDto.getStatus() : "scheduled")
+                .description(milestoneDto.getDescription())
+                .orderIndex(milestoneDto.getOrderIndex() != null ? milestoneDto.getOrderIndex() : nextOrder)
+                .company(company)
+                .build();
+        Milestone saved = milestoneRepository.save(milestone);
+        return modelMapper.map(saved, MilestoneDto.class);
+    }
+
+    @Override
+    @Transactional
+    public MilestoneDto updateMilestone(Long companyId, Long milestoneId, MilestoneDto milestoneDto) {
+        Milestone milestone = milestoneRepository.findById(milestoneId)
+                .orElseThrow(() -> new RuntimeException("Milestone not found with ID: " + milestoneId));
+        if (!milestone.getCompany().getId().equals(companyId)) {
+            throw new RuntimeException("Milestone does not belong to company ID: " + companyId);
+        }
+        milestone.setTitle(milestoneDto.getTitle());
+        milestone.setDate(milestoneDto.getDate());
+        milestone.setStatus(milestoneDto.getStatus());
+        milestone.setDescription(milestoneDto.getDescription());
+        if (milestoneDto.getOrderIndex() != null) {
+            milestone.setOrderIndex(milestoneDto.getOrderIndex());
+        }
+        Milestone saved = milestoneRepository.save(milestone);
+        return modelMapper.map(saved, MilestoneDto.class);
+    }
+
+    @Override
+    @Transactional
+    public void deleteMilestone(Long companyId, Long milestoneId) {
+        Milestone milestone = milestoneRepository.findById(milestoneId)
+                .orElseThrow(() -> new RuntimeException("Milestone not found with ID: " + milestoneId));
+        if (!milestone.getCompany().getId().equals(companyId)) {
+            throw new RuntimeException("Milestone does not belong to company ID: " + companyId);
+        }
+        milestoneRepository.delete(milestone);
+    }
+
 //helpers
 
+    private List<Milestone> createDefaultMilestones(Company company) {
+        List<Milestone> defaults = new ArrayList<>();
+        defaults.add(Milestone.builder()
+                .title("GRC Core Control Architecture Established")
+                .date("Jan 15, 2026")
+                .status("completed")
+                .description("Defined and mapped base compliance standards covering initial security domains.")
+                .orderIndex(1)
+                .company(company)
+                .build());
+        defaults.add(Milestone.builder()
+                .title("Real-time Telemetry Synchronization Enabled")
+                .date("Mar 10, 2026")
+                .status("completed")
+                .description("Integrated Google Sheets automated catalog updates overriding static evidence.")
+                .orderIndex(2)
+                .company(company)
+                .build());
+        defaults.add(Milestone.builder()
+                .title("External Attestation & Auditor Review")
+                .date("May 04, 2026")
+                .status("completed")
+                .description("Independent third-party assessor verification completed with full attestation.")
+                .orderIndex(3)
+                .company(company)
+                .build());
+        defaults.add(Milestone.builder()
+                .title("Continuous Monitoring & Live Trust State")
+                .date("Jun 22, 2026")
+                .status("active")
+                .description("Active continuous posture state verified daily. Live security telemetry feeds.")
+                .orderIndex(4)
+                .company(company)
+                .build());
+        defaults.add(Milestone.builder()
+                .title("Upcoming ISO 27001 Assessment Renewal")
+                .date("Nov 12, 2026")
+                .status("scheduled")
+                .description("Scheduled re-evaluation of system networks and database partitions.")
+                .orderIndex(5)
+                .company(company)
+                .build());
+        return defaults;
+    }
+
+    private void updateCompanyMilestones(Company company, List<MilestoneDto> milestoneDtos) {
+        List<Milestone> existingMilestones = company.getMilestones();
+        List<Long> incomingIds = milestoneDtos.stream()
+                .map(MilestoneDto::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        existingMilestones.removeIf(m -> m.getId() != null && !incomingIds.contains(m.getId()));
+
+        int index = 1;
+        for (MilestoneDto dto : milestoneDtos) {
+            Optional<Milestone> existingOpt = Optional.empty();
+            if (dto.getId() != null) {
+                existingOpt = existingMilestones.stream()
+                        .filter(m -> m.getId().equals(dto.getId()))
+                        .findFirst();
+            }
+            if (existingOpt.isEmpty() && dto.getTitle() != null) {
+                existingOpt = existingMilestones.stream()
+                        .filter(m -> dto.getTitle().equalsIgnoreCase(m.getTitle()))
+                        .findFirst();
+            }
+
+            if (existingOpt.isPresent()) {
+                Milestone m = existingOpt.get();
+                m.setTitle(dto.getTitle());
+                m.setDate(dto.getDate());
+                m.setStatus(dto.getStatus());
+                m.setDescription(dto.getDescription());
+                m.setOrderIndex(dto.getOrderIndex() != null ? dto.getOrderIndex() : index++);
+            } else {
+                Milestone newMilestone = Milestone.builder()
+                        .title(dto.getTitle())
+                        .date(dto.getDate())
+                        .status(dto.getStatus() != null ? dto.getStatus() : "scheduled")
+                        .description(dto.getDescription())
+                        .orderIndex(dto.getOrderIndex() != null ? dto.getOrderIndex() : index++)
+                        .build();
+                company.addMilestone(newMilestone);
+            }
+        }
+    }
+
     private CompanyDto mapToDto(Company company) {
-        CompanyDto dto =modelMapper.map(company, CompanyDto.class);
+        CompanyDto dto = modelMapper.map(company, CompanyDto.class);
 
         if(company.getDomains() != null && !company.getDomains().isEmpty()) {
             List<DomainDto> domainDto = company.getDomains().stream()
@@ -368,6 +537,19 @@ public class CompanyServiceImpl implements CompanyService {
                     .collect(Collectors.toList());
 
             dto.setDomains(domainDto);
+        }
+
+        if (company.getMilestones() != null && !company.getMilestones().isEmpty()) {
+            List<MilestoneDto> milestoneDtos = company.getMilestones().stream()
+                    .map(m -> modelMapper.map(m, MilestoneDto.class))
+                    .collect(Collectors.toList());
+            dto.setMilestones(milestoneDtos);
+        } else {
+            List<Milestone> defaults = createDefaultMilestones(company);
+            List<MilestoneDto> milestoneDtos = defaults.stream()
+                    .map(m -> modelMapper.map(m, MilestoneDto.class))
+                    .collect(Collectors.toList());
+            dto.setMilestones(milestoneDtos);
         }
 
         return dto;
@@ -397,8 +579,22 @@ public class CompanyServiceImpl implements CompanyService {
                 company.addDomain(domain);
             }
         }
-        return  company;
 
+        if (dto.getMilestones() != null && !dto.getMilestones().isEmpty()) {
+            company.getMilestones().clear();
+            for (MilestoneDto milestoneDto : dto.getMilestones()) {
+                Milestone milestone = modelMapper.map(milestoneDto, Milestone.class);
+                milestone.setId(null);
+                company.addMilestone(milestone);
+            }
+        } else {
+            List<Milestone> defaults = createDefaultMilestones(company);
+            for (Milestone m : defaults) {
+                company.addMilestone(m);
+            }
+        }
+
+        return company;
     }
 
     private Domain mapDomainToEntity(DomainDto dto){

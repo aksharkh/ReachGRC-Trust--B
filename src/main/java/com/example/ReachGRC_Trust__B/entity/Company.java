@@ -2,9 +2,7 @@ package com.example.ReachGRC_Trust__B.entity;
 
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -15,7 +13,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "companies")
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"domains", "resources", "milestones"})
+@EqualsAndHashCode(exclude = {"domains", "resources", "milestones"})
 @AllArgsConstructor
 @NoArgsConstructor
 public class Company {
@@ -34,6 +35,10 @@ public class Company {
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Domain> domains = new ArrayList<>();
 
+    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("orderIndex ASC")
+    private List<Milestone> milestones = new ArrayList<>();
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -44,6 +49,15 @@ public class Company {
 
     @Column(name = "is_active")
     private Boolean isActive = true;
+
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    @Column(name = "location_name")
+    private String locationName;
 
     @Column(name = "api_key", unique = true)
     private String apiKey;
@@ -78,6 +92,16 @@ public class Company {
     public void removeDomain(Domain domain){
         domains.remove(domain);
         domain.setCompany(null);
+    }
+
+    public void addMilestone(Milestone milestone){
+        milestones.add(milestone);
+        milestone.setCompany(this);
+    }
+
+    public void removeMilestone(Milestone milestone){
+        milestones.remove(milestone);
+        milestone.setCompany(null);
     }
 
 

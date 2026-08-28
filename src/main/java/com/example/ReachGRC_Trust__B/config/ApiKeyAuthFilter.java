@@ -46,26 +46,26 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         String apiKey = request.getHeader("x-api-key");
 
         if (apiKey == null || apiKey.trim().isEmpty()) {
-            writeErrorResponse(response, HttpStatus.UNAUTHORIZED, "API key missing");
+            writeErrorResponse(request, response, HttpStatus.UNAUTHORIZED, "API key missing");
             return;
         }
 
         Optional<Company> companyOpt = companyRepository.findByApiKey(apiKey);
 
         if (companyOpt.isEmpty()) {
-            writeErrorResponse(response, HttpStatus.UNAUTHORIZED, "Api key not found");
+            writeErrorResponse(request, response, HttpStatus.UNAUTHORIZED, "Api key not found");
             return;
         }
 
         Company company = companyOpt.get();
 
         if (company.getApiKeyStatus() == null || !"ACTIVE".equalsIgnoreCase(company.getApiKeyStatus())) {
-            writeErrorResponse(response, HttpStatus.FORBIDDEN, "Api Key is InActive");
+            writeErrorResponse(request, response, HttpStatus.FORBIDDEN, "Api Key is InActive");
             return;
         }
 
         if (company.getApiKeyExpiresAt() != null && company.getApiKeyExpiresAt().isBefore(LocalDateTime.now())) {
-            writeErrorResponse(response, HttpStatus.FORBIDDEN, "Api Key is Expired");
+            writeErrorResponse(request, response, HttpStatus.FORBIDDEN, "Api Key is Expired");
             return;
         }
 
@@ -80,7 +80,17 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private void writeErrorResponse(HttpServletResponse response, HttpStatus status, String errorMessage) throws IOException {
+    private void writeErrorResponse(HttpServletRequest request, HttpServletResponse response, HttpStatus status, String errorMessage) throws IOException {
+        String origin = request.getHeader("Origin");
+        if (origin != null) {
+            response.setHeader("Access-Control-Allow-Origin", origin);
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+        } else {
+            response.setHeader("Access-Control-Allow-Origin", "*");
+        }
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+        response.setHeader("Access-Control-Allow-Headers", "*");
+
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         JSONObject json = new JSONObject();

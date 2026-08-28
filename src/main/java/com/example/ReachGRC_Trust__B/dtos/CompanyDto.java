@@ -30,7 +30,13 @@ public class CompanyDto {
     @NotEmpty(message = "Company must have at least one domain")
     private List<DomainDto> domains = new ArrayList<>();
 
+    private List<MilestoneDto> milestones = new ArrayList<>();
+
     private Boolean isActive;
+
+    private Double latitude;
+    private Double longitude;
+    private String locationName;
 
     private String apiKey;
     private String apiKeyStatus;

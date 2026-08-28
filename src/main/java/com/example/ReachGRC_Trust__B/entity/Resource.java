@@ -41,6 +41,9 @@ public class Resource {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @Column(name = "label")
+    private String label;
+
     @ManyToOne
     @JoinColumn(name = "company_id")
     private Company company;
